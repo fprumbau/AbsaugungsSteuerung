@@ -6,6 +6,9 @@
 
 // Pin-Definitionen für Heltec WiFi LoRa 32 V3.2
 #define TASTER_PIN 0  // Druckschalter an GPIO 0
+#define LORA_NSS 18   // NSS (Chip Select)
+#define LORA_RST 14   // Reset
+#define LORA_DIO0 26  // DIO0 (Interrupt)
 
 // OLED-Display initialisieren
 SSD1306Wire display(0x3c, SDA_OLED, SCL_OLED);
@@ -65,7 +68,7 @@ void setup() {
 
 void loop() {
   // Dummy-Status mit Zeitstempel
-  status = "TEST";
+  status = "ON";
   scrollText = "I2C-Test - Läuft seit " + String(millis() / 1000) + "s";
 
   // Display aktualisieren mit Fehlerprüfung
