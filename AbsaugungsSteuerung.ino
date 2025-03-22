@@ -6,19 +6,13 @@
 
 // Pin-Definitionen für Heltec WiFi LoRa 32 V3.2
 #define TASTER_PIN 0  // Druckschalter an GPIO 0
-#define LORA_NSS 18   // NSS (Chip Select)
-#define LORA_RST 14   // Reset
-#define LORA_DIO0 26  // DIO0 (Interrupt)
-#define LORA_SCK 5    // SPI SCK
-#define LORA_MISO 19  // SPI MISO
-#define LORA_MOSI 27  // SPI MOSI
 
 // OLED-Display initialisieren
 SSD1306Wire display(0x3c, SDA_OLED, SCL_OLED);
 
 // Status-Variablen
 String status = "ON";
-String scrollText = "Warte auf LoRa - Bereit";
+String scrollText = "I2C-Test - Läuft stabil";
 int scrollOffset = 0;
 
 void VextON() {
@@ -66,42 +60,13 @@ void setup() {
     Serial.println("OLED initialisiert");
   }
 
-  // LoRa-Pins komplett auskommentiert
-  /*
-  Serial.println("Setze NSS...");
-  pinMode(LORA_NSS, OUTPUT);
-  digitalWrite(LORA_NSS, HIGH);
-  Serial.println("NSS gesetzt");
-
-  Serial.println("Setze RST...");
-  pinMode(LORA_RST, OUTPUT);
-  digitalWrite(LORA_RST, HIGH);
-  Serial.println("RST gesetzt");
-
-  Serial.println("Setze DIO0...");
-  pinMode(LORA_DIO0, INPUT);
-  Serial.println("DIO0 gesetzt");
-
-  Serial.println("LoRa konfigurieren...");
-  LoRa.setPins(LORA_NSS, LORA_RST, LORA_DIO0);
-  Serial.println("LoRa-Pins gesetzt");
-
-  if (!LoRa.begin(868E6)) {
-    Serial.println("LoRa-Initialisierung fehlgeschlagen!");
-    status = "ERR";
-    scrollText = "LoRa-Fehler - Prüfe Hardware";
-  } else {
-    Serial.println("LoRa initialisiert");
-  }
-  */
-
   pinMode(TASTER_PIN, INPUT_PULLUP);
 }
 
 void loop() {
-  // Dummy-Status
+  // Dummy-Status mit Zeitstempel
   status = "TEST";
-  scrollText = "I2C-Test - Läuft stabil";
+  scrollText = "I2C-Test - Läuft seit " + String(millis() / 1000) + "s";
 
   // Display aktualisieren mit Fehlerprüfung
   display.clear();
