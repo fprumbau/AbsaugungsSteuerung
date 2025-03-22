@@ -89,26 +89,46 @@ void setup() {
     scrollText = "LoRa-Fehler";
   } else {
     Serial.println("LoRa initialisiert erfolgreich!");
+    // LoRa-Parameter setzen
+    LT.setupLoRa(868000000, 0, LORA_SF7, LORA_BW_125, LORA_CR_4_5, LDRO_AUTO);  // 868 MHz, SF7, BW 125 kHz
   }
 }
 
 void loop() {
   Serial.println("Loop Start...");
 
-  // Minimaler Display-Test
+  // LoRa-Nachricht empfangen
+  Serial.println("Prüfe auf LoRa-Pakete...");
+  uint8_t buffer[255];  // Puffer für empfangene Daten
+  uint8_t maxLen = sizeof(buffer);
+  int16_t len = LT.receive(buffer, maxLen, 1000, NO_WAIT);  // Nicht-blockierend
+  if (len > 0) {  // Prüfe, ob Daten empfangen wurden
+    String message = "";
+    for (uint8_t i = 0; i < len; i++) {
+      message += (char)buffer[i];
+    }
+    status = "ABS";
+    scrollText = "Empf.: " + message + " RSSI: " + String(LT.readPacketRSSI());
+    scrollOffset = 0;
+    Serial.println("LoRa-Nachricht: " + message + " RSSI: " + String(LT.readPacketRSSI()));
+  } else {
+    scrollText = "LoRa-Test " + String(millis() / 1000) + "s";
+  }
+
+  // Display aktualisieren
+  Serial.println("Display aktualisieren...");
   display.clear();
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.setFont(ArialMT_Plain_16);
-  if (!display.drawString(0, 0, "ON")) {
+  if (!display.drawString(0, 0, status)) {
     Serial.println("Display-Fehler bei Status");
   }
   display.setFont(ArialMT_Plain_10);
-  String timeText = "Time: " + String(millis() / 1000) + "s";
-  if (!display.drawString(0, 50, timeText)) {
-    Serial.println("Display-Fehler bei Zeit");
+  if (!display.drawString(0, 50, scrollText)) {
+    Serial.println("Display-Fehler bei Scrolltext");
   }
   display.display();
 
-  Serial.println("Display aktualisiert...");
+  Serial.println("Loop Ende...");
   delay(200);
 }
