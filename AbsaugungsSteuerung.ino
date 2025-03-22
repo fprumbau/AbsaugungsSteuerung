@@ -63,13 +63,19 @@ void setup() {
     Serial.println("OLED initialisiert");
   }
 
+  // Nur RST setzen (statt NSS)
+  Serial.println("Setze RST...");
+  pinMode(LORA_RST, OUTPUT);
+  digitalWrite(LORA_RST, HIGH);
+  Serial.println("RST gesetzt");
+
   pinMode(TASTER_PIN, INPUT_PULLUP);
 }
 
 void loop() {
   // Dummy-Status mit Zeitstempel
   status = "ON";
-  scrollText = "I2C-Test - Läuft seit " + String(millis() / 1000) + "s";
+  scrollText = "RST-Test - Läuft seit " + String(millis() / 1000) + "s";
 
   // Display aktualisieren mit Fehlerprüfung
   display.clear();
