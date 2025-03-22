@@ -1,17 +1,24 @@
 #include <Wire.h>
+#include <SPI.h>
 #include <LoRa.h>
 #include "SSD1306Wire.h"
 #include "pins_arduino.h"
 
 // Pin-Definitionen für Heltec WiFi LoRa 32 V3.2
 #define TASTER_PIN 0  // Druckschalter an GPIO 0
+#define LORA_NSS 18   // NSS (Chip Select)
+#define LORA_RST 14   // Reset
+#define LORA_DIO0 26  // DIO0 (Interrupt)
+#define LORA_SCK 5    // SPI SCK
+#define LORA_MISO 19  // SPI MISO
+#define LORA_MOSI 27  // SPI MOSI
 
-// OLED-Display initialisieren (integriert im Heltec-Board)
+// OLED-Display initialisieren
 SSD1306Wire display(0x3c, SDA_OLED, SCL_OLED);
 
 // Status-Variablen
-String status = "ON";  // Startstatus
-String scrollText = "Warte auf LoRa - Bereit";  // Initialer Dummy-Text
+String status = "ON";
+String scrollText = "Warte auf LoRa - Bereit";
 int scrollOffset = 0;
 
 void VextON() {
@@ -43,54 +50,81 @@ void setup() {
   VextON();
   displayReset();
 
+  // I2C explizit initialisieren
+  Serial.println("I2C initialisieren...");
+  Wire.begin(SDA_OLED, SCL_OLED);
+  Serial.println("I2C initialisiert");
+
   // Display initialisieren
   if (!display.init()) {
     Serial.println("OLED-Initialisierung fehlgeschlagen!");
-    while (1) delay(100);
+    status = "ERR";
+    scrollText = "OLED-Fehler";
+  } else {
+    display.flipScreenVertically();
+    display.setFont(ArialMT_Plain_16);
+    Serial.println("OLED initialisiert");
   }
-  display.flipScreenVertically();
-  display.setFont(ArialMT_Plain_16);  // Große Schrift für Status
-  Serial.println("OLED initialisiert");
 
-  // LoRa initialisieren
-  if (!LoRa.begin(868E6)) {  // 868 MHz für Europa
+  // LoRa-Pins komplett auskommentiert
+  /*
+  Serial.println("Setze NSS...");
+  pinMode(LORA_NSS, OUTPUT);
+  digitalWrite(LORA_NSS, HIGH);
+  Serial.println("NSS gesetzt");
+
+  Serial.println("Setze RST...");
+  pinMode(LORA_RST, OUTPUT);
+  digitalWrite(LORA_RST, HIGH);
+  Serial.println("RST gesetzt");
+
+  Serial.println("Setze DIO0...");
+  pinMode(LORA_DIO0, INPUT);
+  Serial.println("DIO0 gesetzt");
+
+  Serial.println("LoRa konfigurieren...");
+  LoRa.setPins(LORA_NSS, LORA_RST, LORA_DIO0);
+  Serial.println("LoRa-Pins gesetzt");
+
+  if (!LoRa.begin(868E6)) {
     Serial.println("LoRa-Initialisierung fehlgeschlagen!");
-    while (1) delay(100);
+    status = "ERR";
+    scrollText = "LoRa-Fehler - Prüfe Hardware";
+  } else {
+    Serial.println("LoRa initialisiert");
   }
-  Serial.println("LoRa initialisiert");
+  */
 
   pinMode(TASTER_PIN, INPUT_PULLUP);
 }
 
 void loop() {
-  // LoRa-Nachricht empfangen
-  int packetSize = LoRa.parsePacket();
-  if (packetSize) {
-    String message = "";
-    while (LoRa.available()) {
-      message += (char)LoRa.read();
-    }
-    status = "ABS";  // Beispiel: Bei Empfang auf "ABS" wechseln
-    scrollText = "Empfangen: " + message + " - RSSI: " + String(LoRa.packetRssi());
-    scrollOffset = 0;  // Scroll-Reset bei neuer Nachricht
-    Serial.println("LoRa-Nachricht: " + message);
-  }
+  // Dummy-Status
+  status = "TEST";
+  scrollText = "I2C-Test - Läuft stabil";
 
-  // Display aktualisieren
+  // Display aktualisieren mit Fehlerprüfung
   display.clear();
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.setFont(ArialMT_Plain_16);
-  display.drawString(0, 0, status);  // Hauptstatus groß
-
-  display.setFont(ArialMT_Plain_10);  // Kleinere Schrift für Textzeile
-  int textWidth = display.getStringWidth(scrollText);
-  if (textWidth > 128) {  // Scrollen, wenn Text zu lang
-    display.drawString(-scrollOffset, 50, scrollText);
-    scrollOffset = (scrollOffset + 1) % (textWidth + 128);  // Kontinuierlicher Scroll
-  } else {
-    display.drawString(0, 50, scrollText);  // Statisch, wenn kurz genug
+  if (!display.drawString(0, 0, status)) {
+    Serial.println("Display-Fehler bei Status");
   }
+
+  display.setFont(ArialMT_Plain_10);
+  int textWidth = display.getStringWidth(scrollText);
+  if (textWidth > 128) {
+    if (!display.drawString(-scrollOffset, 50, scrollText)) {
+      Serial.println("Display-Fehler bei Scrolltext");
+    }
+    scrollOffset = (scrollOffset + 1) % (textWidth + 128);
+  } else {
+    if (!display.drawString(0, 50, scrollText)) {
+      Serial.println("Display-Fehler bei statischem Text");
+    }
+  }
+
   display.display();
 
-  delay(200);  // 5 Hz Aktualisierungsrate
+  delay(200);
 }
