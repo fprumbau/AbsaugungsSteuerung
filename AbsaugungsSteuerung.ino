@@ -15,7 +15,7 @@ SSD1306Wire display(0x3c, SDA_OLED, SCL_OLED);
 
 // Status-Variablen
 String status = "ON";
-String scrollText = "I2C-Test - Läuft stabil";
+String scrollText = "RST+DIO0-Test - Bereit";
 int scrollOffset = 0;
 
 void VextON() {
@@ -63,19 +63,24 @@ void setup() {
     Serial.println("OLED initialisiert");
   }
 
-  // Nur RST setzen (statt NSS)
+  // RST setzen
   Serial.println("Setze RST...");
   pinMode(LORA_RST, OUTPUT);
   digitalWrite(LORA_RST, HIGH);
-  Serial.println("RST gesetzt");
+  Serial.println("RST gesetztxx");
+
+  // DIO0 setzen
+  Serial.println("aaSetze DIO0...");
+  pinMode(LORA_DIO0, INPUT);
+  Serial.println("DIO0 gesetzt");
 
   pinMode(TASTER_PIN, INPUT_PULLUP);
 }
 
 void loop() {
-  // Dummy-Status mit Zeitstempel
+  // Status mit Zeitstempel
   status = "ON";
-  scrollText = "RST-Test - Läuft seit " + String(millis() / 1000) + "s";
+  scrollText = "RST+DIO0-Test - " + String(millis() / 1000) + "s";
 
   // Display aktualisieren mit Fehlerprüfung
   display.clear();
