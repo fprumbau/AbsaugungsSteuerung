@@ -7,6 +7,8 @@ int scrollOffset = 0;
 unsigned long lastPacketTime = 0;  // Zeit des letzten empfangenen Pakets
 
 void setup() {
+  debugLevel = LORA_MSGS | DEBUG_CONFIG | DEBUG_WIFI;
+
   Serial.begin(115200);
   while (!Serial) delay(10);
   Serial.println("AbsaugungsSteuerung startet...");
@@ -29,6 +31,12 @@ void setup() {
     config.setValue("ssid", "P...y", true);
     config.setValue("pass", "5...7", true);
   }
+
+  debugPrint(DEBUG_WIFI, "Starting WiFi with SSID=" + String(config.getSSID()) + ", Pass=" + String(config.getPass()));
+  wifi.begin(config.getSSID(), config.getPass());
+  //oled.clear();
+  oled.drawString(0, 13, "WiFi-Modus aktiviert");
+  oled.display();
 
   updater.setup();
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
