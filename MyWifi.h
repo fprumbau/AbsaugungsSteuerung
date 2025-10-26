@@ -14,6 +14,7 @@ public:
   void disconnect();
   bool isActive() const;
   void resetTimeout();
+  String localIP();
 
 private:
   String ssid;

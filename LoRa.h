@@ -12,14 +12,12 @@
 #define DIO1_LoRa 14
 #define SW_LoRa -1
 
-#define SENSOR_ID 1  // Eindeutige ID für diesen Sensor (1-255)
-
 class LoRa {
 public:
   LoRa();
   bool init();
   bool send(const String& message, uint16_t timeout = 1000, int8_t txPower = 10); // Bestehende Methode
-  bool send(uint8_t action); // Neue Methode für Protokoll
+  bool send(uint8_t& sensorId, uint8_t action); // Neue Methode für Protokoll
   bool receive(uint8_t& sensorId, uint8_t& action); // Neue Empfangsmethode
   const char* actionToString(uint8_t action); // Für Debug
 

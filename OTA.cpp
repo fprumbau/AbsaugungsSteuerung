@@ -44,6 +44,7 @@ void OTA::setup() {
             } else {
                 Serial.println("Update Failed");
             }
+            updater.restartRequired = true;  // Tell the main loop to restart the ESP
         }
     });
 }

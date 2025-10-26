@@ -15,7 +15,15 @@
 #include "display.h"
 #include "SSD1306Wire.h"
 #include "pins_arduino.h"
+#include "Absaugung.h"
 #include <CFG.h>
+
+#define STARTE 1
+#define STOPPE 2
+#define STARTED 3
+#define STOPPED 4
+#define ACK 5
+#define QUERY 6
 
 #define TASTER_PIN 19  // Taster an GPIO 19
 #define DEBOUNCE_DELAY 100  // Entprellungszeit in ms

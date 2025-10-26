@@ -19,6 +19,8 @@ bool MyWifi::begin(const char* ssid, const char* password) {
     startTime = millis();
     server.begin();
     debugPrint(DEBUG_WIFI, "WiFi connected: " + String(ssid));
+    debugPrint(DEBUG_WIFI, "RSSi:       " + String(WiFi.RSSI()) + " dBm"); 
+    debugPrint(DEBUG_WIFI, "Ip Address: " + WiFi.localIP().toString());
     return true;
   } else {
     Serial.println("WiFi connection failed for SSID: " + String(ssid) + " and passphrase " + String(password));
@@ -30,10 +32,10 @@ bool MyWifi::begin(const char* ssid, const char* password) {
 void MyWifi::loop() {
   if (!active) return;
 
-  if (millis() - startTime > TIMEOUT_MS) {
+  /*if (millis() - startTime > TIMEOUT_MS) {
     disconnect();
     debugPrint(DEBUG_WIFI, "WiFi timeout reached");
-  }
+  }*/
 }
 
 bool MyWifi::isConnected() {
@@ -56,6 +58,10 @@ void MyWifi::resetTimeout() {
     startTime = millis();
     debugPrint(DEBUG_WIFI, "WiFi timeout reset");
   }
+}
+
+String MyWifi::localIP() {
+  return WiFi.localIP().toString();
 }
 
 MyWifi wifi(server); // Instanz mit Server-Referenz

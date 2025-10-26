@@ -5,20 +5,21 @@ String status = "ON";
 String scrollText = "LoRa-Test";
 int scrollOffset = 0;
 unsigned long lastPacketTime = 0;  // Zeit des letzten empfangenen Pakets
+uint8_t confirmAction = 0;
 
 void setup() {
-  debugLevel = LORA_MSGS | DEBUG_LORA;
+  debugLevel = LORA_MSGS;
 
   Serial.begin(115200);
   while (!Serial) delay(10);
-  Serial.println("AbsaugungsSteuerung startet...");
+  Serial.println("Absaugung startet...");
 
   if (!oled.init()) {
     Serial.println("Display initialization failed!");
     while (1);
   }
   oled.clear();
-  oled.drawString(0, 0, "AbsaugungsSteuerung startet...");
+  oled.drawString(0, 0, "Absaugungs startet...");
   oled.display();
 
   if (!lora.init()) {
@@ -35,8 +36,6 @@ void setup() {
   debugPrint(DEBUG_WIFI, "Starting WiFi with SSID=" + String(config.getSSID()) + ", Pass=" + String(config.getPass()));
   wifi.begin(config.getSSID(), config.getPass());
   //oled.clear();
-  oled.drawString(0, 13, "WiFi-Modus aktiviert");
-  oled.display();
 
   updater.setup();
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -55,6 +54,10 @@ void setup() {
 void loop() {
     debugPrint(DEBUG_INIT, "Loop Start...");
 
+    if(updater.restartRequired) {
+      delay(2000);
+      ESP.restart();
+    }
     if (updater.getUpdating()) {
       updater.loop();
       oled.clear();
@@ -70,32 +73,58 @@ void loop() {
 
     uint8_t sensorId, action;
     if (lora.receive(sensorId, action)) {
-        if (action == 1) { // "starte"
-            debugPrint(LORA_MSGS, "Received from sensor" + String(sensorId) + ": starte, sending started");
+        if (action == STARTE) { 
+            debugPrint(LORA_MSGS, "\nReceived from sensor" + String(sensorId) + ": starte, sending started");
             confirming = true;
             lastSensorId = sensorId;
             confirmCount = 0;
+            confirmAction = STARTED;
             lastConfirmTime = 0; // Sofort erste Bestätigung senden
+            absaugung.currentSensor = sensorId;
         }
+        if (action == STOPPE) { 
+            debugPrint(LORA_MSGS, "\nReceived from sensor" + String(sensorId) + ": stoppe, sending stopped");
+            confirming = true;
+            lastSensorId = sensorId;
+            confirmCount = 0;
+            confirmAction = STOPPED;
+            lastConfirmTime = 0; // Sofort erste Bestätigung senden
+            absaugung.currentSensor = 0;
+        }        
+        if (action == ACK) { 
+            debugPrint(LORA_MSGS, "     Received from sensor" + String(sensorId) + ": ack, stopping confirmations");
+            confirming = false;
+        }
+        if (action == QUERY) { 
+            debugPrint(LORA_MSGS, "     Query from sensor" + String(sensorId) + ": sending status");
+            if(absaugung.currentSensor == sensorId) {
+              lora.send(sensorId, STARTED);
+            } else {
+              lora.send(sensorId, STOPPED);
+            }
+        }        
     }
 
     if (confirming && (millis() - lastConfirmTime >= 2000)) {
+        
         if (confirmCount < 3) {
-            if (lora.send(3)) { // "started"
-                debugPrint(LORA_MSGS, "Confirmation sent to sensor" + String(lastSensorId) + ": started (" + String(confirmCount + 1) + "/3)");
+            if (lora.send(lastSensorId, confirmAction)) { 
+                debugPrint(LORA_MSGS, "     Confirmation sent to sensor" + String(lastSensorId) + ": " + lora.actionToString(confirmAction) + " (" + String(confirmCount + 1) + "/3)");
                 confirmCount++;
                 lastConfirmTime = millis();
             } else {
-                debugPrint(LORA_MSGS, "Confirmation send failed to sensor" + String(lastSensorId));
+                debugPrint(LORA_MSGS, "     Confirmation send failed to sensor" + String(lastSensorId));
             }
         }
         if (confirmCount >= 3) {
+            debugPrint(LORA_MSGS, "     Confirmation count surpassed for sensor" + String(lastSensorId));
             confirming = false;
             confirmCount = 0;
         }
     }
 
+    oled.updateScreen();
 
     debugPrint(DEBUG_INIT,"Loop Ende...");
-    delay(100); // Reduziert, um Empfang zu beschleunigen
+    //delay(5); 
 }

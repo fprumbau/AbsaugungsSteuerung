@@ -16,6 +16,7 @@ public:
   void clear();             // Löscht das Display
   void drawString(int x, int y, const String& text); // Zeichnet Text
   void display();           // Aktualisiert das Display
+  void updateScreen();      // Schreibt eine normale Seite
 
 private:
   SSD1306Wire oled;         // Internes SSD1306Wire-Objekt

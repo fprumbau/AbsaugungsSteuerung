@@ -10,7 +10,7 @@ bool Display::init() {
   Wire.begin(SDA_OLED, SCL_OLED);
   oled.init();
   Serial.println("OLED init called"); // Debug
-  oled.flipScreenVertically();
+  //oled.flipScreenVertically();
   oled.setFont(ArialMT_Plain_10);
   debugPrint(DEBUG_DISPLAY, "Display initialized");
   return true; // Hier könnte eine Fehlerprüfung hinzugefügt werden
@@ -42,6 +42,13 @@ void Display::drawString(int x, int y, const String& text) {
 
 void Display::display() {
   oled.display();
+}
+
+void Display::updateScreen() {
+    oled.clear();
+    oled.drawString(0, 0, "WiFi aktiv: " + wifi.localIP());
+    oled.drawString(0, 13, "Aktiver Sensor: " + String(absaugung.currentSensor));
+    oled.display();
 }
 
 Display oled; // Definition

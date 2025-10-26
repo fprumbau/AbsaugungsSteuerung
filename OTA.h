@@ -5,13 +5,14 @@
 
 class OTA {
 private:
-    bool isUpdating;
+    bool isUpdating;    
 
 public:
     OTA();
     void setup();
     void loop();
     bool getUpdating();
+    bool restartRequired;
 };
 
 extern OTA updater;
